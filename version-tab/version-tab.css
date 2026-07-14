@@ -1,0 +1,36 @@
+/* version-tab — changelog panel skin (the same rules vanilla.js injects).
+   Skin via custom properties on .version-tab, all optional:
+     --vt-accent           badge background            (default translucent gray)
+     --vt-accent-contrast  badge text color            (default inherit)
+     --vt-heading          subheads + inline-code tint (default inherit)
+     --vt-dim              dates / captions            (default mid gray)
+     --vt-border           rule under the header       (default translucent gray)
+     --vt-border-subtle    rules between entries       (default fainter gray)
+     --vt-max-width        panel width                 (default 760px)
+   Extra hook: .vt-entry.latest marks the newest entry (unstyled by default). */
+
+.version-tab { max-width: var(--vt-max-width, 760px); }
+
+.vt-head { display: flex; align-items: baseline; gap: 10px; margin: 2px 0 18px;
+  padding-bottom: 14px; border-bottom: 1px solid var(--vt-border, rgba(127,127,127,.35)); }
+.vt-badge { background: var(--vt-accent, rgba(127,127,127,.22));
+  color: var(--vt-accent-contrast, inherit); font-weight: 800; font-size: 15px;
+  padding: 4px 12px; border-radius: 6px; letter-spacing: .5px; }
+.vt-loaded { color: var(--vt-dim, rgba(127,127,127,.95)); font-size: 12px; }
+
+.vt-entry { padding: 16px 0; border-top: 1px solid var(--vt-border-subtle, rgba(127,127,127,.2)); }
+.vt-entry:first-of-type { border-top: none; padding-top: 2px; }
+.vt-ver { font-size: 16px; font-weight: 800; margin-bottom: 2px; }
+.vt-date { font-weight: 500; font-size: 12.5px; color: var(--vt-dim, rgba(127,127,127,.95)); }
+.vt-sub { font-size: 11px; font-weight: 700; color: var(--vt-heading, inherit);
+  letter-spacing: .6px; text-transform: uppercase; margin: 14px 0 6px; }
+.vt-p { font-size: 12.5px; line-height: 1.65; margin: 6px 0; }
+.vt-p.dim { color: var(--vt-dim, rgba(127,127,127,.95)); }
+.vt-list { margin: 6px 0 10px; padding-left: 18px; }
+.vt-list li { font-size: 12.5px; line-height: 1.6; margin-bottom: 6px; }
+
+.version-tab code { background: rgba(127,127,127,.18); padding: 1px 5px;
+  border-radius: 4px; font-size: 11.5px; color: var(--vt-heading, inherit); }
+
+/* Braille loading spinner (animated by vanilla.js while fetching) */
+.vt-spin { display: inline-block; width: 1em; text-align: center; margin-right: 6px; }
