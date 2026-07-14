@@ -7,7 +7,7 @@ need) — there's no build step, no package to install, no framework lock-in.
 | Module | What it does |
 |---|---|
 | [`daylight-theme`](./daylight-theme) | Dark / light / **auto** theme controller — auto follows local sunrise and sunset, estimated from the browser timezone with no geolocation prompt. Vanilla drop-in, TypeScript core, and a React toggle. |
-| [`version-tab`](./version-tab) | "What build am I looking at?" — loaded-version badge + changelog panel, version stamped onto the tab label. Parses plain `CHANGELOG.md` + `VERSION`; vanilla drop-in for static sites, Python module for server-fed apps. |
+| [`version-tab`](./version-tab) | "What build am I looking at?" — a 🏷️ v8.0 chip showing the live version; click it for the release notes (every version, date, and notes). Parses plain `CHANGELOG.md` + `VERSION`; vanilla drop-in for static sites, Python module for server-fed apps. |
 
 ## Conventions
 

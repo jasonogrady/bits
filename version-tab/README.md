@@ -1,11 +1,11 @@
 # version-tab
 
-"What build am I looking at?" — a **Version tab** for any page: a loaded-version
-badge, the project changelog below it (newest first), and the version number
-stamped onto the tab label itself (`Version` → `v8.0`). Born on the
+"What build am I looking at?" — a compact **version chip** (🏷️ v8.0) showing
+the live version; click it and the **release notes** open: every version with
+its date and notes, newest first. Born on the
 [chip.ogrady.golf](https://chip.ogrady.golf) live leaderboard, where the server
-auto-deploys itself: the page shows which build is actually serving, so a deploy
-is verifiable from the browser — no shelling in.
+auto-deploys itself: the page shows which build is actually serving, so a
+deploy is verifiable from the browser — no shelling in.
 
 Two flavors, one renderer:
 
@@ -48,21 +48,52 @@ the script tag (works inlined too); all are optional.
 <script src="vanilla.js"
         data-changelog="CHANGELOG.md"
         data-version="VERSION"
+        data-icon="🏷️"
         data-loaded-text="loaded on this server"></script>
 
-<span data-version-label>Version</span>   <!-- tab label → "v8.0" -->
-<div data-version-tab></div>              <!-- becomes the panel -->
+<div data-version-tab></div>   <!-- becomes the 🏷️ v8.0 chip -->
 ```
+
+That's the whole integration: the chip shows a braille spinner (⠋⠙⠹…) while
+fetching, then the live version. Clicking it opens the release notes in an
+auto-created modal (Esc, ×, or a backdrop click closes it; the dialog
+background uses the system `Canvas` color, so it follows the page's
+`color-scheme`).
 
 `data-version` takes either a URL to fetch (`VERSION`, `/api/version.txt`) or
 a literal — values starting with a digit (optionally `v`) are used as-is
-(`data-version="8.0"`). A braille spinner (⠋⠙⠹…) shows while fetching.
+(`data-version="8.0"`).
+
+### Inline panel instead of the modal
+
+If you'd rather show the notes in your own layout (a settings page, a tab
+pane), add a panel mount — the chip then toggles it instead of opening the
+modal:
+
+```html
+<div data-version-tab></div>     <!-- chip -->
+<div data-version-panel></div>   <!-- notes render here, start hidden -->
+```
+
+A `data-version-panel` with no chip on the page just renders in place,
+always visible.
+
+### Your own tab system
+
+If the trigger is already a tab button you own (like the leaderboard's
+Version tab), skip the chip and use a label stamp — it only sets
+`textContent`, no click wiring:
+
+```html
+<button onclick="switchTab('version')">🏷️ <span data-version-label>Version</span></button>
+<div id="tab-version" data-version-panel hidden></div>
+```
 
 ## Server-fed usage (Python)
 
-When your app already serves a JSON payload (and you want the changelog read
-off the *server's* disk — the point on an auto-deployed box), parse
-server-side and hand the result to the renderer:
+When your app already serves a JSON payload (and you want the notes read off
+the *server's* disk — the point on an auto-deployed box), parse server-side
+and hand the result to the renderer:
 
 ```python
 from versiontab import payload
@@ -73,6 +104,7 @@ data.update(payload(ROOT))     # adds "version" + "changelog"
 
 ```html
 <script src="vanilla.js" data-auto="off"></script>
+<div data-version-tab></div>
 ```
 
 ```js
@@ -80,24 +112,33 @@ data.update(payload(ROOT))     # adds "version" + "changelog"
 window.__versionTab.render(data.version, data.changelog);
 ```
 
-`render()` fills every `[data-version-tab]` mount and stamps every
-`[data-version-label]`, so the wiring is the same in both modes.
+`render()` updates every chip, panel, label, and an open modal, so the wiring
+is the same in both modes — call it again on each poll and the chip bumps
+when a deploy lands.
 
 ## Skinning
 
-The panel ships with neutral defaults (translucent grays, inherits the
+Everything ships with neutral defaults (translucent grays, inherits the
 surrounding text color) so it looks right on any background. To skin it, set
-custom properties on `.version-tab`:
+custom properties — no CSS of your own to write:
 
 ```css
-.version-tab {
-  --vt-accent: gold;             /* badge background */
+.vt-tab {                        /* the chip */
+  --vt-tab-bg: #21262d;
+  --vt-tab-border: #30363d;
+  --vt-tab-hover-bg: #30363d;
+}
+.version-tab {                   /* the notes */
+  --vt-accent: gold;             /* version badge background */
   --vt-accent-contrast: #1a1a1a; /* badge text */
   --vt-heading: gold;            /* ### subheads + inline code tint */
   --vt-dim: #8b949e;             /* dates, captions */
   --vt-border: #30363d;          /* rule under the header */
   --vt-border-subtle: #21262d;   /* rules between entries */
-  --vt-max-width: 760px;
+}
+.vt-dialog {                     /* the modal */
+  --vt-panel-bg: #0d1117;
+  --vt-panel-color: #c9d1d9;
 }
 .vt-entry.latest .vt-ver { color: #fff; }  /* newest entry hook */
 ```
@@ -107,7 +148,9 @@ custom properties on `.version-tab`:
 `window.__versionTab`:
 
 - `parse(text)` — CHANGELOG.md text → `[{version, date, html}]`
-- `render(version, entries)` — draw into all mounts, stamp all labels
+- `render(version, entries)` — feed data in: updates chips, panels, labels,
+  and an open modal
+- `open()` / `close()` / `toggle()` — drive the notes programmatically
 - `refresh()` — re-run the static-mode fetch
 
 `versiontab.py`: `load_version(root)`, `load_changelog(root)`,
