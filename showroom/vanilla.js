@@ -30,6 +30,7 @@
      data-gate-text    sign-in dialog copy    (default below)
      data-device-placeholder  key input placeholder (default "Device key")
      data-device-button       key submit label (default "Authorize this device")
+     data-device-error        bad-key message  (default "That key didn’t match.")
      data-options-url  auth methods endpoint  (default "/api/auth/options")
      data-device-url   device login endpoint  (default "/api/auth/device")
 
@@ -55,8 +56,8 @@
   var cfg = (document.currentScript && document.currentScript.dataset) || {};
   var KEY = cfg.key || "showroom-mode";
   var DEFAULT = cfg.default === "live" ? "live" : "demo";
-  var DEMO_ICON = cfg.demoIcon || "🎭"; // 🎭
-  var LIVE_ICON = cfg.liveIcon || "📡"; // 📡
+  var DEMO_ICON = cfg.demoIcon || "🎭";
+  var LIVE_ICON = cfg.liveIcon || "📡";
   var DEMO_LABEL = cfg.demoLabel || "Demo";
   var LIVE_LABEL = cfg.liveLabel || "Live";
   var WELCOME = cfg.welcome ||
@@ -67,6 +68,7 @@
     "This is the owner’s real data. Sign in — or keep exploring the demo.";
   var DEVICE_PLACEHOLDER = cfg.devicePlaceholder || "Device key";
   var DEVICE_BUTTON = cfg.deviceButton || "Authorize this device";
+  var DEVICE_ERROR = cfg.deviceError || "That key didn’t match.";
   var OPTIONS_URL = cfg.optionsUrl || "/api/auth/options";
   var DEVICE_URL = cfg.deviceUrl || "/api/auth/device";
 
@@ -77,6 +79,8 @@
     } catch (e) { return DEFAULT; }
   }
   function setMode(m) {
+    m = m === "live" ? "live" : "demo";
+    if (m === getMode()) return;
     try { localStorage.setItem(KEY, m); } catch (e) {}
     sync();
     document.dispatchEvent(new CustomEvent("showroom:mode", { detail: { mode: m } }));
@@ -120,6 +124,20 @@
   }
 
   // ── Pill + welcome note ────────────────────────────────────────────────
+  function pillButton(mode, icon, label, title) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.title = title;
+    b.setAttribute("data-showroom-mode", mode);
+    var i = document.createElement("span");
+    i.setAttribute("aria-hidden", "true");
+    i.textContent = icon;
+    b.appendChild(i);
+    b.appendChild(document.createTextNode(label));
+    b.addEventListener("click", function () { setMode(mode); });
+    return b;
+  }
+
   function render() {
     var mounts = document.querySelectorAll("[data-showroom-toggle]");
     for (var i = 0; i < mounts.length; i++) {
@@ -128,17 +146,9 @@
       m.classList.add("showroom-toggle");
       if (!m.getAttribute("role")) m.setAttribute("role", "group");
       if (!m.getAttribute("aria-label")) m.setAttribute("aria-label", "Data mode");
-      m.innerHTML =
-        '<button type="button" data-showroom-mode="demo" title="Sample data">' +
-          '<span aria-hidden="true">' + DEMO_ICON + "</span>" + DEMO_LABEL + "</button>" +
-        '<button type="button" data-showroom-mode="live" title="Real data — sign-in required">' +
-          '<span aria-hidden="true">' + LIVE_ICON + "</span>" + LIVE_LABEL + "</button>";
-      var btns = m.querySelectorAll("[data-showroom-mode]");
-      for (var j = 0; j < btns.length; j++) {
-        btns[j].addEventListener("click", function () {
-          setMode(this.getAttribute("data-showroom-mode"));
-        });
-      }
+      m.textContent = "";
+      m.appendChild(pillButton("demo", DEMO_ICON, DEMO_LABEL, "Sample data"));
+      m.appendChild(pillButton("live", LIVE_ICON, LIVE_LABEL, "Real data — sign-in required"));
     }
     var notes = document.querySelectorAll("[data-showroom-note]");
     for (var k = 0; k < notes.length; k++) {
@@ -186,11 +196,12 @@
     document.addEventListener("keydown", onEsc);
     document.body.appendChild(gateEl);
 
+    var gate = gateEl;
     fetch(OPTIONS_URL, { credentials: "include" })
       .then(function (r) { return r.ok ? r.json() : {}; })
       .catch(function () { return {}; })
       .then(function (opts) {
-        if (!gateEl) return; // closed while loading
+        if (gateEl !== gate) return; // closed (or reopened) while loading
         if (opts.sso && opts.sso.url) {
           var sso = document.createElement("button");
           sso.type = "button";
@@ -233,7 +244,7 @@
                 document.dispatchEvent(new CustomEvent("showroom:authed"));
               })
               .catch(function () {
-                err.textContent = "That key didn’t match.";
+                err.textContent = DEVICE_ERROR;
                 err.hidden = false;
               })
               .then(function () { submit.disabled = false; });

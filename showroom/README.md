@@ -68,8 +68,8 @@ without an identity provider.
 All `data-*` attributes on the script tag, all optional: `data-key`,
 `data-default` (`demo`|`live`), `data-demo-label`/`-icon`,
 `data-live-label`/`-icon`, `data-welcome`, `data-gate-title`, `data-gate-text`,
-`data-device-placeholder`, `data-device-button`, `data-options-url`,
-`data-device-url`.
+`data-device-placeholder`, `data-device-button`, `data-device-error`,
+`data-options-url`, `data-device-url`.
 
 ## Events + API
 

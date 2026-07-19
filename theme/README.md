@@ -1,4 +1,4 @@
-# daylight-theme
+# theme
 
 Dark / light / **auto** theme controller. Auto means *light between local
 sunrise and sunset, dark otherwise* — the sun position is computed from a
@@ -11,20 +11,25 @@ Three flavors, same behavior:
 | File | Use when |
 |---|---|
 | `vanilla.js` | Plain HTML site. Inline or load it in `<head>` — it applies the theme synchronously (no flash of the wrong theme) and renders + styles the ☀ ◐ ☾ pill itself. |
-| `daylightTheme.ts` | Any bundled app. Framework-agnostic core, typed, configurable. |
+| `theme.ts` | Any bundled app. Framework-agnostic core, typed, configurable. |
 | `ThemeToggle.tsx` + `theme-toggle.css` | React. Renders the pill, driven by the core; the CSS file is the same skin `vanilla.js` injects. |
 
 ## How it works
 
 - The chosen preference (`"auto" | "light" | "dark"`) persists in
   `localStorage`; the *effective* theme lands on
-  `<html data-theme="light|dark">` — style against that attribute.
-- Auto re-evaluates every 5 minutes and on tab focus, so an open page flips
-  at sunrise/sunset.
+  `<html data-theme="light|dark">` — style against that attribute. The root's
+  `color-scheme` is set too, so native form controls and scrollbars follow.
+- Auto arms a timer for the exact next sunrise/sunset, so an open page flips
+  right at the boundary; tab focus re-checks in case the device slept
+  through it.
+- Changing the preference in one tab applies it in every open tab
+  (`storage` event).
 - Sunrise/sunset use the standard solar-declination formula with the sun
   centre at −0.833° (accounts for refraction); polar day and night are
   handled.
-- Optionally keeps `<meta name="theme-color">` in sync for mobile chrome.
+- Optionally keeps `<meta name="theme-color">` in sync for mobile chrome —
+  the tag is created if the page doesn't have one.
 
 ## Vanilla usage
 
@@ -72,18 +77,18 @@ Hand-written markup still works (and wins over auto-render) — any button with
 ## TypeScript / React usage
 
 ```ts
-// theme.ts — create once, import first so it runs before first paint
-import { createDaylightTheme } from "./daylightTheme";
+// appTheme.ts — create once, import first so it runs before first paint
+import { createTheme } from "./theme";
 
-export const theme = createDaylightTheme({
-  storageKey: "myapp-theme",     // default "daylight-theme"
+export const theme = createTheme({
+  storageKey: "myapp-theme",     // default "theme"
   defaultPref: "auto",           // default "auto"
   themeColors: { light: "#f7f5f0", dark: "#0f172a" }, // optional
 });
 ```
 
 ```tsx
-import { theme } from "./theme";
+import { theme } from "./appTheme";
 import { ThemeToggle } from "./ThemeToggle";
 import "./theme-toggle.css";     // same skin vanilla.js injects
 
@@ -91,8 +96,11 @@ import "./theme-toggle.css";     // same skin vanilla.js injects
 ```
 
 The core's API: `getPref()`, `setPref(pref)`, `effective()`, `apply()`,
-`isDaytime()`, and `subscribe(fn)` (returns an unsubscribe function).
-`vanilla.js` exposes the same surface on `window.__theme`.
+`isDaytime()`, `subscribe(fn)` (returns an unsubscribe function), and
+`destroy()` (stops the flip timer and listeners — for SPA/HMR teardown).
+`vanilla.js` exposes the same surface on `window.__theme` and dispatches a
+`themechange` CustomEvent on `window` with `detail: { pref, theme }` on
+every theme change.
 
 ## Caveats
 

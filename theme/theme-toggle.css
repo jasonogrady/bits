@@ -1,4 +1,4 @@
-/* daylight-theme pill — companion skin for ThemeToggle.tsx.
+/* theme pill — companion skin for ThemeToggle.tsx.
    (vanilla.js injects these same rules itself; don't load both.)
    Skin with custom properties on .theme-toggle, all optional:
    --tt-bg --tt-border --tt-color --tt-active-bg --tt-active-color

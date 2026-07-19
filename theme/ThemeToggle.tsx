@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { DaylightTheme, ThemePref } from "./daylightTheme";
+import type { ThemeController, ThemePref } from "./theme";
 
 const OPTIONS: Array<{ pref: ThemePref; glyph: string; label: string }> = [
   { pref: "light", glyph: "☀", label: "Light theme" },
@@ -7,7 +7,7 @@ const OPTIONS: Array<{ pref: ThemePref; glyph: string; label: string }> = [
   { pref: "dark", glyph: "☾", label: "Dark theme" },
 ];
 
-export function ThemeToggle({ theme }: { theme: DaylightTheme }) {
+export function ThemeToggle({ theme }: { theme: ThemeController }) {
   const [pref, setPref] = useState<ThemePref>(theme.getPref());
   useEffect(() => theme.subscribe((p) => setPref(p)), [theme]);
 

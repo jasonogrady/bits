@@ -6,7 +6,7 @@ need) — there's no build step, no package to install, no framework lock-in.
 
 | Module | What it does |
 |---|---|
-| [`daylight-theme`](./daylight-theme) | Dark / light / **auto** theme controller — auto follows local sunrise and sunset, estimated from the browser timezone with no geolocation prompt. Vanilla drop-in, TypeScript core, and a React toggle. |
+| [`theme`](./theme) | Dark / light / **auto** theme controller — auto follows local sunrise and sunset, estimated from the browser timezone with no geolocation prompt. Vanilla drop-in, TypeScript core, and a React toggle. |
 | [`version-tab`](./version-tab) | "What build am I looking at?" — a 🏷️ v8.0 chip showing the live version; click it for the release notes (every version, date, and notes). Parses plain `CHANGELOG.md` + `VERSION`; vanilla drop-in for static sites, Python module for server-fed apps. |
 | [`showroom`](./showroom) | Demo-first front door for an app with private data — visitors get a 🎭 sample-data showroom with a welcome note; 📡 Live opens a sign-in dialog (SSO and/or a device key that allowlists the owner's personal devices). The app just renders whichever mode and calls `requireAuth()` on a 401. |
 
