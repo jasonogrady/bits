@@ -116,6 +116,35 @@ window.__versionTab.render(data.version, data.changelog);
 is the same in both modes — call it again on each poll and the chip bumps
 when a deploy lands.
 
+## Use case: the ghost stamp (crispydigitals.com)
+
+The chip doesn't have to look like a chip. On
+[crispydigitals.com](https://crispydigitals.com) it hides in plain sight as a
+tiny `2026-07-23 · v1.3` stamp at the end of the footer — static mode, dark
+Nocturne theme, the pill skinned away to plain dim text. Visitors read it as a
+copyright date; the owner clicks it and gets the private-feeling release notes.
+Versioning convention there: +0.1 per push, +1.0 for a major one.
+
+```html
+<footer>© 2026 … <span class="vstamp">· 2026-07-23 <span data-version-tab></span></span></footer>
+<script src="/assets/vt.js" data-changelog="/CHANGELOG.md"
+        data-version="/VERSION" data-icon=""
+        data-loaded-text="live on crispydigitals.com"></script>
+```
+
+```css
+.vstamp { font-size: 11px; color: color-mix(in srgb, var(--color-text) 38%, transparent); }
+.vstamp .vt-tab { --vt-tab-bg: transparent; --vt-tab-border: transparent;
+  --vt-tab-hover-bg: color-mix(in srgb, var(--color-text) 10%, transparent);
+  font-size: 11px; font-weight: 500; padding: 1px 5px; gap: 0; color: inherit; }
+.vt-dialog { --vt-panel-bg: var(--color-surface); --vt-panel-color: var(--color-text); }
+.version-tab { --vt-accent: var(--color-accent-900); --vt-accent-contrast: #fff;
+  --vt-heading: var(--color-accent-400); }
+```
+
+`data-icon=""` drops the 🏷️, transparent bg/border melt the pill into the
+footer text, and the hover tint is the only tell that it's clickable.
+
 ## Skinning
 
 Everything ships with neutral defaults (translucent grays, inherits the
