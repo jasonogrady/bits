@@ -1,0 +1,14 @@
+{
+  "name": "Town Crier",
+  "short_name": "Crier",
+  "description": "Jason's personal notification hub — a layer above the noise.",
+  "start_url": "/crier/",
+  "scope": "/crier/",
+  "display": "standalone",
+  "background_color": "#0a0a0c",
+  "theme_color": "#0a0a0c",
+  "icons": [
+    { "src": "/crier/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/crier/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

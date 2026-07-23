@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Town Crier</title>
+<link rel="manifest" href="/crier/manifest.webmanifest" />
+<link rel="apple-touch-icon" href="/crier/icons/icon-180.png" />
+<link rel="icon" href="/crier/icons/icon-192.png" />
+<meta name="theme-color" content="#0a0a0c" />
+<style>
+  :root {
+    --bg: #0a0a0c; --panel: #121216; --line: #26262c;
+    --ink: #e8e6e1; --dim: #8a8894; --acc: #ff5a1f;
+    --ok: #35c46f; --warn: #e8b330; --bad: #e5484d;
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    background: var(--bg); color: var(--ink); font: 14px/1.5 var(--mono);
+    min-height: 100vh; padding-bottom: 40px;
+  }
+  header {
+    display: flex; align-items: center; gap: 10px; padding: 14px 18px;
+    border-bottom: 1px solid var(--line); position: sticky; top: 0;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(8px); z-index: 5;
+  }
+  header h1 { font-size: 15px; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; }
+  header h1 span { color: var(--acc); }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--dim); flex: none; }
+  .dot.ok { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+  .dot.bad { background: var(--bad); box-shadow: 0 0 8px var(--bad); }
+  .spacer { flex: 1; }
+  button {
+    font: 12px var(--mono); color: var(--ink); background: var(--panel);
+    border: 1px solid var(--line); border-radius: 7px; padding: 7px 12px; cursor: pointer;
+  }
+  button:hover { border-color: var(--acc); color: var(--acc); }
+  button.primary { background: var(--acc); border-color: var(--acc); color: #0a0a0c; font-weight: 700; }
+  button.primary:hover { color: #0a0a0c; filter: brightness(1.08); }
+  nav { display: flex; gap: 2px; padding: 10px 18px 0; }
+  nav button { border-radius: 7px 7px 0 0; border-bottom: none; color: var(--dim); }
+  nav button.active { color: var(--acc); border-color: var(--acc); }
+  main { padding: 14px 18px; max-width: 860px; }
+  .card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    padding: 12px 14px; margin-bottom: 10px;
+  }
+  .card .top { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+  .src {
+    font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--acc);
+    border: 1px solid color-mix(in srgb, var(--acc) 45%, transparent);
+    padding: 1px 7px; border-radius: 99px;
+  }
+  .when { color: var(--dim); font-size: 11px; margin-left: auto; }
+  .title { font-weight: 700; margin-top: 6px; }
+  .body { color: var(--dim); white-space: pre-wrap; font-size: 12.5px; margin-top: 4px; overflow-wrap: anywhere; }
+  .pri-high .title::before, .pri-urgent .title::before { content: "▲ "; color: var(--bad); }
+  .row { display: flex; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 12.5px; flex-wrap: wrap; }
+  .row:last-child { border-bottom: none; }
+  .row .ev { min-width: 120px; font-weight: 700; }
+  .row .ev.hot { color: var(--acc); }
+  .row .meta { color: var(--dim); overflow-wrap: anywhere; }
+  .badge { font-size: 10px; border: 1px solid var(--line); color: var(--dim); border-radius: 99px; padding: 0 6px; }
+  .empty { color: var(--dim); padding: 30px 0; text-align: center; }
+  #gate { max-width: 420px; margin: 12vh auto; text-align: center; padding: 0 18px; }
+  #gate img { width: 84px; border-radius: 20px; margin-bottom: 14px; }
+  #gate input {
+    width: 100%; font: 13px var(--mono); color: var(--ink); background: var(--panel);
+    border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin: 14px 0 10px;
+  }
+  #gate p { color: var(--dim); font-size: 12px; }
+  pre { font-size: 11px; color: var(--dim); overflow-x: auto; }
+  .hidden { display: none !important; }
+  #toast {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
+    background: var(--panel); border: 1px solid var(--acc); color: var(--ink);
+    border-radius: 9px; padding: 9px 16px; font-size: 12.5px; z-index: 10;
+    transition: opacity .3s; opacity: 0; pointer-events: none; max-width: 90vw;
+  }
+</style>
+</head>
+<body>
+
+<div id="gate" class="hidden">
+  <img src="/crier/icons/icon-192.png" alt="" />
+  <h1>TOWN <span style="color:#ff5a1f">CRIER</span></h1>
+  <p>Private notification hub. Paste your <code>CRIER_TOKEN</code> to enter.</p>
+  <input id="tokenInput" type="password" placeholder="CRIER_TOKEN" autocomplete="off" />
+  <button class="primary" id="tokenSave">Unlock</button>
+</div>
+
+<div id="app" class="hidden">
+  <header>
+    <div class="dot" id="statusDot" title="hub status"></div>
+    <h1>TOWN <span>CRIER</span></h1>
+    <div data-version-tab></div>
+    <div class="spacer"></div>
+    <button id="btnPush" title="Register this device for macOS push notifications">Enable push</button>
+    <button id="btnTest" title="Fire a test notification through every channel">Ring the bell</button>
+    <button id="btnRefresh">↻</button>
+  </header>
+  <nav>
+    <button data-tab="alerts" class="active">Alerts</button>
+    <button data-tab="traffic">Traffic</button>
+    <button data-tab="health">Health</button>
+  </nav>
+  <main>
+    <div id="tab-alerts"><div class="empty">Loading…</div></div>
+    <div id="tab-traffic" class="hidden"><div class="empty">Loading…</div></div>
+    <div id="tab-health" class="hidden"><div class="empty">Loading…</div></div>
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<script>
+(() => {
+  const TOKEN_KEY = 'crier_token';
+  let token = localStorage.getItem(TOKEN_KEY) || '';
+  const $ = (s) => document.querySelector(s);
+  const auth = () => ({ Authorization: 'Bearer ' + token });
+
+  const toast = (msg, ms = 3200) => {
+    const t = $('#toast'); t.textContent = msg; t.style.opacity = 1;
+    clearTimeout(t._h); t._h = setTimeout(() => (t.style.opacity = 0), ms);
+  };
+  const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const ago = (ts) => {
+    const s = (Date.now() - ts) / 1000;
+    if (s < 60) return Math.floor(s) + 's ago';
+    if (s < 3600) return Math.floor(s / 60) + 'm ago';
+    if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+    return new Date(ts).toLocaleString();
+  };
+
+  // ---------- token gate ----------
+  function showGate() {
+    $('#gate').classList.remove('hidden'); $('#app').classList.add('hidden');
+  }
+  function showApp() {
+    $('#gate').classList.add('hidden'); $('#app').classList.remove('hidden');
+    refresh();
+  }
+  $('#tokenSave').onclick = async () => {
+    token = $('#tokenInput').value.trim();
+    const r = await fetch('/api/crier/notify?limit=1', { headers: auth() });
+    if (r.ok) { localStorage.setItem(TOKEN_KEY, token); showApp(); }
+    else toast('Token rejected (' + r.status + ')');
+  };
+  $('#tokenInput')?.addEventListener('keydown', (e) => e.key === 'Enter' && $('#tokenSave').click());
+
+  // ---------- tabs ----------
+  document.querySelectorAll('nav button').forEach((b) => {
+    b.onclick = () => {
+      document.querySelectorAll('nav button').forEach((x) => x.classList.toggle('active', x === b));
+      ['alerts', 'traffic', 'health'].forEach((t) =>
+        $('#tab-' + t).classList.toggle('hidden', t !== b.dataset.tab));
+    };
+  });
+
+  // ---------- data ----------
+  async function refresh() {
+    const dot = $('#statusDot');
+    try {
+      const [feedR, healthR] = await Promise.all([
+        fetch('/api/crier/notify?limit=60', { headers: auth() }),
+        fetch('/api/pulse?events=40', { headers: auth() }),
+      ]);
+      if (feedR.status === 401) { showGate(); return; }
+      const feed = await feedR.json();
+      const health = await healthR.json();
+      dot.className = 'dot ' + (feed.ok && health.ok ? 'ok' : 'bad');
+      renderAlerts(feed.notes || []);
+      renderTraffic(health.recent_events || []);
+      renderHealth(health);
+    } catch (e) {
+      dot.className = 'dot bad';
+      toast('Refresh failed: ' + e.message);
+    }
+  }
+
+  function renderAlerts(notes) {
+    $('#tab-alerts').innerHTML = notes.length
+      ? notes.map((n) => `
+        <div class="card pri-${esc(n.priority || 'default')}">
+          <div class="top">
+            <span class="src">${esc(n.source)}</span>
+            <span class="when">${ago(n.ts)}</span>
+          </div>
+          <div class="title">${esc(n.title)}</div>
+          ${n.body ? `<div class="body">${esc(n.body)}</div>` : ''}
+          ${n.url ? `<div class="body"><a href="${esc(n.url)}" style="color:var(--acc)" target="_blank" rel="noopener">${esc(n.url)}</a></div>` : ''}
+        </div>`).join('')
+      : '<div class="empty">No notifications yet. Ring the bell to test.</div>';
+  }
+
+  function renderTraffic(events) {
+    const hot = ['session_start', 'qualified_lead', 'contact_submit', 'contact_view'];
+    $('#tab-traffic').innerHTML = events.length
+      ? '<div class="card">' + events.map((e) => `
+        <div class="row">
+          <span class="ev ${hot.includes(e.event) ? 'hot' : ''}">${esc(e.event)}</span>
+          <span class="meta">${esc(e.path || '')}</span>
+          <span class="meta">${esc([e.geo?.org, e.geo?.city, e.geo?.country].filter(Boolean).join(' · '))}</span>
+          ${e.owner ? '<span class="badge">you</span>' : ''}${e.bot ? '<span class="badge">bot</span>' : ''}
+          <span class="when">${ago(e.ts)}</span>
+        </div>`).join('') + '</div>'
+      : '<div class="empty">No traffic recorded yet.</div>';
+  }
+
+  function renderHealth(h) {
+    const yn = (v) => v ? '<span style="color:var(--ok)">yes</span>' : '<span style="color:var(--bad)">NO</span>';
+    $('#tab-health').innerHTML = `
+      <div class="card">
+        <div class="row"><span class="ev">KV bound</span><span class="meta">${yn(h.kv)}</span></div>
+        <div class="row"><span class="ev">ntfy topic</span><span class="meta">${yn(h.ntfy_topic_set)}</span></div>
+        <div class="row"><span class="ev">Web Push keys</span><span class="meta">${yn(h.vapid_set)}</span></div>
+        <div class="row"><span class="ev">IPinfo</span><span class="meta">${yn(h.ipinfo_set)}</span></div>
+        <div class="row"><span class="ev">Devices</span><span class="meta">${h.push_subscriptions ?? 0} push subscription(s)</span></div>
+      </div>
+      <div class="card"><b>Recent deliveries</b>
+        <pre>${esc(JSON.stringify(h.recent_deliveries || [], null, 1))}</pre>
+      </div>`;
+  }
+
+  // ---------- web push ----------
+  async function enablePush() {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      return toast('Web Push unsupported here. On macOS: install this page as an app (Safari: File → Add to Dock, Chrome: install icon in the address bar).', 6000);
+    }
+    try {
+      const reg = await navigator.serviceWorker.register('/crier/sw.js', { scope: '/crier/' });
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') return toast('Notification permission denied');
+      const { vapidPublicKey } = await (await fetch('/api/crier/subscribe')).json();
+      if (!vapidPublicKey) return toast('Server missing VAPID key');
+      const raw = atob(vapidPublicKey.replace(/-/g, '+').replace(/_/g, '/'));
+      const appKey = Uint8Array.from(raw, (c) => c.charCodeAt(0));
+      const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: appKey });
+      const r = await fetch('/api/crier/subscribe', {
+        method: 'POST',
+        headers: { ...auth(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subscription: sub.toJSON(), label: navigator.userAgent.slice(0, 70) }),
+      });
+      toast(r.ok ? 'This device is registered 📯 — ring the bell to verify.' : 'Registration failed (' + r.status + ')');
+      refresh();
+    } catch (e) { toast('Push setup failed: ' + e.message, 6000); }
+  }
+
+  async function ringBell() {
+    toast('Ringing…');
+    try {
+      const r = await (await fetch('/api/pulse?selftest=1', { headers: auth() })).json();
+      const parts = (r.selftest?.results || []).map((x) =>
+        `${x.channel}: ${x.status ?? x.skipped ?? x.error ?? '?'}`);
+      toast('Sent → ' + (parts.join('  |  ') || JSON.stringify(r)), 8000);
+      setTimeout(refresh, 800);
+    } catch (e) { toast('Self-test failed: ' + e.message); }
+  }
+
+  $('#btnPush').onclick = enablePush;
+  $('#btnTest').onclick = ringBell;
+  $('#btnRefresh').onclick = refresh;
+
+  // keep the SW registered on every load (needed for push on installed PWA)
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/crier/sw.js', { scope: '/crier/' }).catch(() => {});
+
+  token ? showApp() : showGate();
+  setInterval(() => !document.hidden && token && refresh(), 60000);
+  document.addEventListener('visibilitychange', () => !document.hidden && token && refresh());
+})();
+</script>
+<script src="/crier/version-tab.js"
+        data-changelog="/crier/CHANGELOG.md"
+        data-version="/crier/VERSION"></script>
+</body>
+</html>

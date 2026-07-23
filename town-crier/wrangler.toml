@@ -1,0 +1,16 @@
+# Cloudflare Pages — Town Crier standalone dev config
+# Production currently deploys via the ogradyai-website Pages project;
+# this config exists so the hub runs locally from this directory:
+#   npx wrangler pages dev deploy   (with a gitignored .dev.vars)
+name = "town-crier"
+compatibility_date = "2025-01-01"
+pages_build_output_dir = "deploy"
+
+[vars]
+# VAPID public key for Web Push (Town Crier PWA). Public by design —
+# the private half is the VAPID_PRIVATE_JWK secret on the Pages project.
+VAPID_PUBLIC_KEY = "BJHILmw3TRMQXDKqCOqTkAklfp-t9aTi_SzA3vDzD-j6_IPDJViqCDK5S5AO8GMvw3Z7VZfYESJrthHf-gGFZ5I"
+
+[[kv_namespaces]]
+binding = "CRIER"
+id = "45e4425e3d054dc39e24d205dc516dc7"
