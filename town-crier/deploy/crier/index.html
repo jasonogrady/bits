@@ -217,6 +217,7 @@
       <div class="card">
         <div class="row"><span class="ev">KV bound</span><span class="meta">${yn(h.kv)}</span></div>
         <div class="row"><span class="ev">ntfy topic</span><span class="meta">${yn(h.ntfy_topic_set)}</span></div>
+        <div class="row"><span class="ev">ntfy auth</span><span class="meta">${h.ntfy_auth_set ? '<span style="color:var(--ok)">yes (paid account)</span>' : '<span style="color:var(--warn)">no — anonymous, shared rate limits</span>'}</span></div>
         <div class="row"><span class="ev">Web Push keys</span><span class="meta">${yn(h.vapid_set)}</span></div>
         <div class="row"><span class="ev">IPinfo</span><span class="meta">${yn(h.ipinfo_set)}</span></div>
         <div class="row"><span class="ev">Devices</span><span class="meta">${h.push_subscriptions ?? 0} push subscription(s)</span></div>

@@ -30,10 +30,35 @@ Crier over to its own Pages project using the `wrangler.toml` in this folder).
 | Test harness | `scripts/test-alerts.sh` | fires every path end to end |
 
 Secrets on the Pages project: `CRIER_TOKEN` (hub auth), `VAPID_PRIVATE_JWK`
-(Web Push signing), `NTFY_TOPIC` (phone), `NTFY_AUTH` (paid ntfy token — bound
-2026-07; fixes shared-egress-IP 429s), optional `IPINFO_TOKEN` (company
-enrichment). `VAPID_PUBLIC_KEY` is a plain var in `wrangler.toml`. KV namespace
-`CRIER` is bound in `wrangler.toml`.
+(Web Push signing), `NTFY_TOPIC` (phone), `NTFY_AUTH` (ntfy access token —
+see below), optional `IPINFO_TOKEN` (company enrichment). `VAPID_PUBLIC_KEY`
+is a plain var in `wrangler.toml`. KV namespace `CRIER` is bound in
+`wrangler.toml`.
+
+## Paid ntfy (account-authenticated pushes)
+
+The hub publishes to ntfy with `Authorization: Bearer $NTFY_AUTH` whenever the
+secret is set (`functions/lib/crier.js`); unauthenticated publishes share rate
+limits with everyone on ntfy.sh's egress-IP pool — that's the 429 story. With
+a paid account you get per-account limits **and reserved topics**, which is
+the real win: an unreserved topic is public — anyone who guesses the name can
+subscribe and read every lead alert.
+
+One-time setup (paid account, web app at ntfy.sh):
+
+1. **Access token** — Account → Access tokens → Create (`tk_…`). Bind it:
+   `npx wrangler pages secret put NTFY_AUTH` (paste the token). This replaces
+   any token minted before the paid upgrade — limits follow the account that
+   minted the token.
+2. **Reserve the topic** — Settings → Reserved topics → reserve `$NTFY_TOPIC`
+   with **"Only I can publish and subscribe"**. Existing anonymous
+   subscriptions stop working, which is the point.
+3. **Sign in on the iPhone app** — ntfy app → Settings → sign in to the same
+   account, so the phone can still subscribe to the now-private topic.
+4. **Verify** — ring the bell (or `scripts/test-alerts.sh`); the PWA **Health**
+   tab should show `ntfy auth: yes (paid account)` and the ntfy result
+   `status: 200`. From a logged-out browser, `https://ntfy.sh/$NTFY_TOPIC/json`
+   should now 403.
 
 ## Post a notification from any app
 

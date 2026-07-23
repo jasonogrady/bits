@@ -81,6 +81,7 @@ export async function onRequestGet({ request, env }) {
     ok: true,
     kv: !!env.CRIER,
     ntfy_topic_set: !!env.NTFY_TOPIC,
+    ntfy_auth_set: !!env.NTFY_AUTH,
     vapid_set: !!env.VAPID_PRIVATE_JWK,
     ipinfo_set: !!env.IPINFO_TOKEN,
   };

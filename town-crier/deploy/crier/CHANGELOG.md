@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.2 — 2026-07-23
+
+- Paid ntfy support: Health tab now reports ntfy auth status (account token vs anonymous shared limits)
+- README: one-time paid setup — access token → `NTFY_AUTH`, reserve the topic (stops anonymous subscribers), sign in on the phone app
+
 ## v1.1 — 2026-07-23
 
 - Development consolidated into `bits/town-crier` — the canonical home; ogrady.ai deploys downstream
