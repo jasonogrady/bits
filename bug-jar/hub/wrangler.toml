@@ -1,0 +1,28 @@
+# bug-jar 🫙 hub — one Worker + D1 where every project's bugs collect.
+#
+# One-time setup:
+#   npx wrangler d1 create bug-jar          # paste database_id below
+#   npx wrangler d1 execute bug-jar --file schema.sql --remote
+#   npx wrangler secret put JAR_TOKEN       # ingest token (apps hold it server-side)
+#   npx wrangler secret put JAR_ADMIN_TOKEN # dashboard + triage API
+#   npx wrangler secret put CRIER_URL       # optional: town-crier 📯 fan-out
+#   npx wrangler secret put CRIER_TOKEN     # optional: town-crier bearer token
+#   npx wrangler deploy
+
+name = "bug-jar"
+main = "src/worker.js"
+compatibility_date = "2026-07-01"
+
+# Give it a home when you're ready (workers.dev URL works fine meanwhile):
+# routes = [{ pattern = "jar.example.com", custom_domain = true }]
+
+[dev]
+port = 8788   # keeps clear of app dev servers on :8787
+
+[[d1_databases]]
+binding = "DB"
+database_name = "bug-jar"
+database_id = "REPLACE_WITH_wrangler_d1_create_OUTPUT"
+
+[observability]
+enabled = true

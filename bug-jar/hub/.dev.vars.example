@@ -1,0 +1,6 @@
+# Copy to .dev.vars (gitignored) for local dev. Production uses `wrangler secret put`.
+JAR_TOKEN=devtoken
+JAR_ADMIN_TOKEN=admintoken
+# Optional town-crier 📯 fan-out — leave unset to skip notifications:
+# CRIER_URL=https://example.com
+# CRIER_TOKEN=…
