@@ -11,6 +11,7 @@ need) — there's no build step, no package to install, no framework lock-in.
 | [`showroom`](./showroom) | Demo-first front door for an app with private data — visitors get a 🎭 sample-data showroom with a welcome note; 📡 Live opens a sign-in dialog (SSO and/or a device key that allowlists the owner's personal devices). The app just renders whichever mode and calls `requireAuth()` on a 401. |
 | [`bug-jar`](./bug-jar) | 🫙 One-tap in-app bug reports — testers tap a button, type a sentence, and the report (plus URL, app version, and recent console errors) drops into a shared Worker + D1 jar with a Buganizer-style triage dashboard, CSV reports, and optional town-crier 📯 fan-out. Drop-in client + deployable hub. |
 | [`town-crier`](./town-crier) | 📯 Personal notification hub — anything that matters POSTs a note in, and it fans out to every device: ntfy → iPhone, Web Push → Mac PWA, native menu-bar app. Zero-dep Web Push crypto (VAPID + aes128gcm), every delivery status recorded. Cloudflare Pages functions + KV; the one bit that's a deployable service rather than a drop-in file. |
+| [`shop-bell`](./shop-bell) | 🔔 Visitor pulse with a bell on the door — first-party analytics that rings your phone when someone who matters walks in. Drop-in client (configurable browse + goal ⇒ qualified-lead funnel, scroll/dwell, owner opt-out) + Worker/D1 ledger with alert fan-out to a town-crier 📯 hub **and** ntfy direct. Named `pulse` on the wire because "analytics"/"track" get ad-blocked. |
 
 ## Conventions
 
