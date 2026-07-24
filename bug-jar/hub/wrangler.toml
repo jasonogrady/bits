@@ -22,7 +22,7 @@ port = 8788   # keeps clear of app dev servers on :8787
 [[d1_databases]]
 binding = "DB"
 database_name = "bug-jar"
-database_id = "REPLACE_WITH_wrangler_d1_create_OUTPUT"
+database_id = "90966eb3-0a57-4414-97b8-1e021525d8d8"
 
 [observability]
 enabled = true
