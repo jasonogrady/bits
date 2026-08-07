@@ -21,6 +21,13 @@
    Configure via data-* attributes on the <script> tag, all optional:
      data-key          localStorage key       (default "showroom-mode")
      data-default      first-visit mode       (default "demo")
+     data-compact      "true" → one small button instead of the
+                       two-segment pill: it names the OTHER mode
+                       ("Live?" while in demo, "Demo" while live),
+                       for tight toolbars. Labels reuse
+                       data-demo-label / data-live-label; the demo
+                       button's live label gets a trailing "?" to
+                       read as an invitation.
      data-demo-label   pill label             (default "Demo")
      data-demo-icon    pill icon              (default "🎭")
      data-live-label   pill label             (default "Live")
@@ -71,6 +78,7 @@
   var DEVICE_ERROR = cfg.deviceError || "That key didn’t match.";
   var OPTIONS_URL = cfg.optionsUrl || "/api/auth/options";
   var DEVICE_URL = cfg.deviceUrl || "/api/auth/device";
+  var COMPACT = cfg.compact === "true";
 
   function getMode() {
     try {
@@ -95,6 +103,9 @@
     ".showroom-toggle button:hover{opacity:1}" +
     ".showroom-toggle button[aria-pressed=\"true\"]{opacity:1;" +
       "background:var(--sr-active-bg,rgba(127,127,127,.25));color:var(--sr-active-color,inherit)}" +
+    ".showroom-toggle.showroom-compact{gap:0}" +
+    ".showroom-toggle.showroom-compact button{opacity:.85}" +
+    ".showroom-toggle.showroom-compact button:hover{opacity:1}" +
     ".showroom-gate{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;" +
       "background:rgba(0,0,0,.45)}" +
     ".showroom-dialog{max-width:340px;width:calc(100% - 48px);padding:24px;border-radius:12px;" +
@@ -138,17 +149,34 @@
     return b;
   }
 
+  // Compact: one button naming the OTHER mode — an exit sign while in live
+  // ("🎭 Demo"), an invitation while in demo ("📡 Live?").
+  function compactButton() {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.setAttribute("data-showroom-compact", "");
+    b.addEventListener("click", function () {
+      setMode(getMode() === "demo" ? "live" : "demo");
+    });
+    return b;
+  }
+
   function render() {
     var mounts = document.querySelectorAll("[data-showroom-toggle]");
     for (var i = 0; i < mounts.length; i++) {
       var m = mounts[i];
-      if (m.querySelector("[data-showroom-mode]")) continue;
+      if (m.querySelector("[data-showroom-mode],[data-showroom-compact]")) continue;
       m.classList.add("showroom-toggle");
+      if (COMPACT) m.classList.add("showroom-compact");
       if (!m.getAttribute("role")) m.setAttribute("role", "group");
       if (!m.getAttribute("aria-label")) m.setAttribute("aria-label", "Data mode");
       m.textContent = "";
-      m.appendChild(pillButton("demo", DEMO_ICON, DEMO_LABEL, "Sample data"));
-      m.appendChild(pillButton("live", LIVE_ICON, LIVE_LABEL, "Real data — sign-in required"));
+      if (COMPACT) {
+        m.appendChild(compactButton());
+      } else {
+        m.appendChild(pillButton("demo", DEMO_ICON, DEMO_LABEL, "Sample data"));
+        m.appendChild(pillButton("live", LIVE_ICON, LIVE_LABEL, "Real data — sign-in required"));
+      }
     }
     var notes = document.querySelectorAll("[data-showroom-note]");
     for (var k = 0; k < notes.length; k++) {
@@ -162,6 +190,22 @@
     var btns = document.querySelectorAll("[data-showroom-mode]");
     for (var i = 0; i < btns.length; i++) {
       btns[i].setAttribute("aria-pressed", String(btns[i].getAttribute("data-showroom-mode") === mode));
+    }
+    var compacts = document.querySelectorAll("[data-showroom-compact]");
+    for (var j = 0; j < compacts.length; j++) {
+      var c = compacts[j];
+      // Rebuild children only on a real mode change — the MutationObserver
+      // watches childList, and an unconditional rebuild would loop forever.
+      if (c.getAttribute("data-showroom-compact") === mode) continue;
+      c.setAttribute("data-showroom-compact", mode);
+      var toDemo = mode === "live";
+      c.textContent = "";
+      var icon = document.createElement("span");
+      icon.setAttribute("aria-hidden", "true");
+      icon.textContent = toDemo ? DEMO_ICON : LIVE_ICON;
+      c.appendChild(icon);
+      c.appendChild(document.createTextNode(toDemo ? DEMO_LABEL : LIVE_LABEL + "?"));
+      c.title = toDemo ? "Back to sample data" : "Real data — sign-in required";
     }
     var notes = document.querySelectorAll("[data-showroom-note]");
     for (var k = 0; k < notes.length; k++) notes[k].hidden = mode !== "demo";
