@@ -1,0 +1,219 @@
+{
+  "builtTestProducts" : [
+
+  ],
+  "copyCommands" : {
+
+  },
+  "explicitTargetDependencyImportCheckingMode" : {
+    "none" : {
+
+    }
+  },
+  "generatedSourceTargetSet" : [
+
+  ],
+  "pluginDescriptions" : [
+
+  ],
+  "swiftCommands" : {
+    "C.TownCrier-arm64-apple-macosx28.0-release.module" : {
+      "executable" : "/Library/Developer/CommandLineTools/usr/bin/swiftc",
+      "fileList" : "/Users/jason/dev/bits/town-crier/macos/.build/arm64-apple-macosx/release/TownCrier.build/sources",
+      "importPath" : "/Users/jason/dev/bits/town-crier/macos/.build/arm64-apple-macosx/release/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/jason/dev/bits/town-crier/macos/Sources/TownCrier/main.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jason/dev/bits/town-crier/macos/.build/arm64-apple-macosx/release/swift-version--1AB21518FC5DEDBE.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jason/dev/bits/town-crier/macos/.build/arm64-apple-macosx/release/TownCrier.build/sources"
+        }
+      ],
+      "isLibrary" : false,
+      "moduleName" : "TownCrier",
+      "moduleOutputPath" : "/Users/jason/dev/bits/town-crier/macos/.build/arm64-apple-macosx/release/Modules/TownCrier.swiftmodule",
+      "objects" : [
+        "/Users/jason/dev/bits/town-crier/macos/.build/arm64-apple-macosx/release/TownCrier.build/main.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx15.0",
+        "-whole-module-optimization",
+        "-num-threads",
+        "14",
+        "-serialize-diagnostics",
+        "-O",
+        "-j14",
+        "-DSWIFT_PACKAGE",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/jason/dev/bits/town-crier/macos/.build/arm64-apple-macosx/release/ModuleCache",
+        "-parseable-output",
+        "-Xfrontend",
+        "-entry-point-function-name",
+        "-Xfrontend",
+        "TownCrier_main",
+        "-swift-version",
+        "6",
+        "-I",
+        "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
+        "-L",
+        "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
+        "-plugin-path",
+        "/Library/Developer/CommandLineTools/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "macos"
+      ],
+      "outputFileMapPath" : "/Users/jason/dev/bits/town-crier/macos/.build/arm64-apple-macosx/release/TownCrier.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/jason/dev/bits/town-crier/macos/.build/arm64-apple-macosx/release/TownCrier.build/main.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jason/dev/bits/town-crier/macos/.build/arm64-apple-macosx/release/Modules/TownCrier.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/jason/dev/bits/town-crier/macos/Sources/TownCrier/main.swift"
+      ],
+      "tempsPath" : "/Users/jason/dev/bits/town-crier/macos/.build/arm64-apple-macosx/release/TownCrier.build",
+      "wholeModuleOptimization" : true
+    }
+  },
+  "swiftFrontendCommands" : {
+
+  },
+  "swiftTargetScanArgs" : {
+    "TownCrier" : [
+      "/Library/Developer/CommandLineTools/usr/bin/swiftc",
+      "-module-name",
+      "TownCrier",
+      "-package-name",
+      "macos",
+      "-c",
+      "/Users/jason/dev/bits/town-crier/macos/Sources/TownCrier/main.swift",
+      "-I",
+      "/Users/jason/dev/bits/town-crier/macos/.build/arm64-apple-macosx/release/Modules",
+      "-target",
+      "arm64-apple-macosx15.0",
+      "-whole-module-optimization",
+      "-num-threads",
+      "14",
+      "-serialize-diagnostics",
+      "-O",
+      "-j14",
+      "-DSWIFT_PACKAGE",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/jason/dev/bits/town-crier/macos/.build/arm64-apple-macosx/release/ModuleCache",
+      "-parseable-output",
+      "-Xfrontend",
+      "-entry-point-function-name",
+      "-Xfrontend",
+      "TownCrier_main",
+      "-swift-version",
+      "6",
+      "-I",
+      "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
+      "-L",
+      "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
+      "-plugin-path",
+      "/Library/Developer/CommandLineTools/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "macos",
+      "-driver-use-frontend-path",
+      "/Library/Developer/CommandLineTools/usr/bin/swiftc"
+    ]
+  },
+  "targetDependencyMap" : {
+    "TownCrier" : [
+
+    ]
+  },
+  "testDiscoveryCommands" : {
+
+  },
+  "testEntryPointCommands" : {
+
+  },
+  "traitConfiguration" : {
+    "default" : {
+
+    }
+  },
+  "writeCommands" : {
+    "/Users/jason/dev/bits/town-crier/macos/.build/arm64-apple-macosx/release/TownCrier.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jason/dev/bits/town-crier/macos/Sources/TownCrier/main.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/jason/dev/bits/town-crier/macos/.build/arm64-apple-macosx/release/TownCrier.build/sources"
+    },
+    "/Users/jason/dev/bits/town-crier/macos/.build/arm64-apple-macosx/release/TownCrier.product/Objects.LinkFileList" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<link-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jason/dev/bits/town-crier/macos/.build/arm64-apple-macosx/release/TownCrier.build/main.swift.o"
+        }
+      ],
+      "outputFilePath" : "/Users/jason/dev/bits/town-crier/macos/.build/arm64-apple-macosx/release/TownCrier.product/Objects.LinkFileList"
+    },
+    "/Users/jason/dev/bits/town-crier/macos/.build/arm64-apple-macosx/release/swift-version--1AB21518FC5DEDBE.txt" : {
+      "alwaysOutOfDate" : true,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<swift-get-version>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Library/Developer/CommandLineTools/usr/bin/swiftc"
+        }
+      ],
+      "outputFilePath" : "/Users/jason/dev/bits/town-crier/macos/.build/arm64-apple-macosx/release/swift-version--1AB21518FC5DEDBE.txt"
+    }
+  }
+}

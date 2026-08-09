@@ -1,0 +1,47 @@
+client:
+  name: basic
+  file-system: device-agnostic
+tools: {}
+targets:
+  "PackageStructure": ["<PackageStructure>"]
+  "TownCrier-arm64-apple-macosx28.0-debug.module": ["<TownCrier-arm64-apple-macosx28.0-debug.module>"]
+  "main": ["<TownCrier-arm64-apple-macosx28.0-debug.module>"]
+  "test": ["<TownCrier-arm64-apple-macosx28.0-debug.module>"]
+default: "main"
+nodes:
+  "/Users/jason/dev/bits/town-crier/macos/Sources/TownCrier/":
+    is-directory-structure: true
+    content-exclusion-patterns: [".git",".build"]
+commands:
+  "/Users/jason/dev/bits/town-crier/macos/.build/index-build/arm64-apple-macosx/debug/TownCrier.build/sources":
+    tool: write-auxiliary-file
+    inputs: ["<sources-file-list>","/Users/jason/dev/bits/town-crier/macos/Sources/TownCrier/main.swift"]
+    outputs: ["/Users/jason/dev/bits/town-crier/macos/.build/index-build/arm64-apple-macosx/debug/TownCrier.build/sources"]
+    description: "Write auxiliary file /Users/jason/dev/bits/town-crier/macos/.build/index-build/arm64-apple-macosx/debug/TownCrier.build/sources"
+
+  "/Users/jason/dev/bits/town-crier/macos/.build/index-build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt":
+    tool: write-auxiliary-file
+    inputs: ["<swift-get-version>","/Library/Developer/CommandLineTools/usr/bin/swiftc"]
+    outputs: ["/Users/jason/dev/bits/town-crier/macos/.build/index-build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt"]
+    always-out-of-date: "true"
+    description: "Write auxiliary file /Users/jason/dev/bits/town-crier/macos/.build/index-build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt"
+
+  "<TownCrier-arm64-apple-macosx28.0-debug.module>":
+    tool: phony
+    inputs: ["/Users/jason/dev/bits/town-crier/macos/.build/index-build/arm64-apple-macosx/debug/Modules/TownCrier.swiftmodule"]
+    outputs: ["<TownCrier-arm64-apple-macosx28.0-debug.module>"]
+
+  "C.TownCrier-arm64-apple-macosx28.0-debug.module":
+    tool: shell
+    inputs: ["/Users/jason/dev/bits/town-crier/macos/Sources/TownCrier/main.swift","/Users/jason/dev/bits/town-crier/macos/.build/index-build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt","/Users/jason/dev/bits/town-crier/macos/.build/index-build/arm64-apple-macosx/debug/TownCrier.build/sources"]
+    outputs: ["/Users/jason/dev/bits/town-crier/macos/.build/index-build/arm64-apple-macosx/debug/Modules/TownCrier.swiftmodule"]
+    description: "Compiling Swift Module 'TownCrier' (1 sources)"
+    args: ["/Library/Developer/CommandLineTools/usr/bin/swiftc","-module-name","TownCrier","-emit-dependencies","-emit-module","-emit-module-path","/Users/jason/dev/bits/town-crier/macos/.build/index-build/arm64-apple-macosx/debug/Modules/TownCrier.swiftmodule","-output-file-map","/Users/jason/dev/bits/town-crier/macos/.build/index-build/arm64-apple-macosx/debug/TownCrier.build/output-file-map.json","-incremental","@/Users/jason/dev/bits/town-crier/macos/.build/index-build/arm64-apple-macosx/debug/TownCrier.build/sources","-I","/Users/jason/dev/bits/town-crier/macos/.build/index-build/arm64-apple-macosx/debug/Modules","-target","arm64-apple-macosx15.0","-incremental","-enable-batch-mode","-serialize-diagnostics","-Onone","-enable-testing","-j14","-DSWIFT_PACKAGE","-DDEBUG","-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE","-module-cache-path","/Users/jason/dev/bits/town-crier/macos/.build/index-build/arm64-apple-macosx/debug/ModuleCache","-parseable-output","-Xfrontend","-entry-point-function-name","-Xfrontend","TownCrier_main","-swift-version","6","-Xfrontend","-experimental-lazy-typecheck","-Xfrontend","-experimental-skip-all-function-bodies","-Xfrontend","-experimental-allow-module-with-compiler-errors","-Xfrontend","-empty-abi-descriptor","-I","/Library/Developer/CommandLineTools/Library/Developer/Frameworks","-L","/Library/Developer/CommandLineTools/Library/Developer/Frameworks","-plugin-path","/Library/Developer/CommandLineTools/usr/lib/swift/host/plugins/testing","-sdk","/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk","-g","-Xcc","-isysroot","-Xcc","/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk","-Xcc","-fPIC","-Xcc","-g","-package-name","macos"]
+
+  "PackageStructure":
+    tool: package-structure-tool
+    inputs: ["/Users/jason/dev/bits/town-crier/macos/Sources/TownCrier/","/Users/jason/dev/bits/town-crier/macos/Package.swift","/Users/jason/dev/bits/town-crier/macos/Package.resolved"]
+    outputs: ["<PackageStructure>"]
+    description: "Planning build"
+    allow-missing-inputs: true
+

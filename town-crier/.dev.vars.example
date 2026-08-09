@@ -1,0 +1,9 @@
+# Copy to .dev.vars (gitignored) for `npx wrangler pages dev deploy`.
+# Values live in the Pages project secrets (wrangler pages secret list
+# --project-name ogradyai-website) and your notes — never commit them.
+
+CRIER_TOKEN=testtoken123
+NTFY_TOPIC=your-reserved-topic
+NTFY_AUTH=tk_your_ntfy_access_token
+VAPID_PRIVATE_JWK={"kty":"EC","crv":"P-256","x":"…","y":"…","d":"…"}
+# IPINFO_TOKEN=optional

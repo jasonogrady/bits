@@ -1,0 +1,5 @@
+---
+triple:          'arm64-apple-darwin'
+binary-path:     '/Users/jason/dev/bits/town-crier/macos/.build/arm64-apple-macosx/release/TownCrier'
+relocations:     []
+...

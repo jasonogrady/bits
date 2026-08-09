@@ -106,20 +106,32 @@ retention in KV) including `you` / `bot` flags.
    → allow notifications.
 4. **Ring the bell** → you should get a macOS notification + phone push.
 
-## Menu bar app (native, v2 scaffold)
+## Menu bar app (native, v0.2)
 
 `macos/` — Swift/AppKit `NSStatusItem` (📯) + `UNUserNotificationCenter`,
-polls the hub feed every 30 s, notes menu with click-through, no Dock icon.
+notes menu with click-through, no Dock icon. Subscribes to the ntfy topic
+over WebSocket (`wss://ntfy.sh/$NTFY_TOPIC/ws`, Bearer `NTFY_AUTH`) as a
+realtime wake-up, then fetches the hub feed — the hub stays the source of
+truth, so formatting and dedupe are unchanged. Falls back to 30 s polling
+while the socket is down (auto-reconnect with backoff; ~5 min belt-and-braces
+poll while live). The first menu item shows which mode you're in.
+**Start at Login** menu toggle registers it via `SMAppService`.
 
 ```bash
 cd macos
 ./make-app.sh install         # builds, ad-hoc signs, installs, launches
-mkdir -p ~/.config/crier && echo YOUR_CRIER_TOKEN > ~/.config/crier/token
+mkdir -p ~/.config/crier && cat > ~/.config/crier/config <<EOF
+CRIER_TOKEN=your_hub_token
+NTFY_TOPIC=your_reserved_topic
+NTFY_AUTH=tk_your_ntfy_access_token
+EOF
 ```
 
-Roadmap for the native app: replace polling with an SSE/WebSocket subscribe
-(ntfy's WS endpoint works today: `wss://ntfy.sh/$TOPIC/ws`), Login Item
-auto-start, per-source mute rules, notification history window, proper icon.
+(Legacy `~/.config/crier/token` holding just the hub token still works —
+without `NTFY_TOPIC` the app simply stays in 30 s polling mode.)
+
+Roadmap for the native app: per-source mute rules, notification history
+window, proper icon.
 
 ## Design notes
 

@@ -1,0 +1,12 @@
+{
+  "": {
+    "swift-dependencies": "/Users/jason/dev/bits/town-crier/macos/.build/index-build/arm64-apple-macosx/debug/TownCrier.build/master.swiftdeps"
+  },
+  "/Users/jason/dev/bits/town-crier/macos/Sources/TownCrier/main.swift": {
+    "dependencies": "/Users/jason/dev/bits/town-crier/macos/.build/index-build/arm64-apple-macosx/debug/TownCrier.build/main.d",
+    "object": "/Users/jason/dev/bits/town-crier/macos/.build/index-build/arm64-apple-macosx/debug/TownCrier.build/main.swift.o",
+    "swiftmodule": "/Users/jason/dev/bits/town-crier/macos/.build/index-build/arm64-apple-macosx/debug/TownCrier.build/main~partial.swiftmodule",
+    "swift-dependencies": "/Users/jason/dev/bits/town-crier/macos/.build/index-build/arm64-apple-macosx/debug/TownCrier.build/main.swiftdeps",
+    "diagnostics": "/Users/jason/dev/bits/town-crier/macos/.build/index-build/arm64-apple-macosx/debug/TownCrier.build/main.dia"
+  }
+}

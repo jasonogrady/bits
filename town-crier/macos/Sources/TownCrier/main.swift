@@ -1,27 +1,65 @@
 // ============================================================
-// Town Crier — native macOS menu bar app (scaffold, v0.1)
+// Town Crier — native macOS menu bar app (v0.2)
 //
-// Sole job: poll the Town Crier hub (/api/crier/notify on
-// ogrady.ai) and surface new notes as native macOS notifications
-// + a menu-bar feed. The PWA at /crier/ is the v1 client; this
-// is the v2 that never needs a browser running.
+// Sole job: surface Town Crier hub notes as native macOS
+// notifications + a menu-bar feed. The PWA at /crier/ is the
+// v1 client; this is the v2 that never needs a browser running.
+//
+// Delivery: subscribes to the ntfy topic over WebSocket
+// (wss://ntfy.sh/<topic>/ws) as a realtime wake-up signal, then
+// fetches the hub feed — the hub stays the single source of
+// truth, so notifications keep hub formatting and dedupe.
+// Falls back to 30 s polling whenever the socket is down
+// (and still polls every ~5 min while live, belt-and-braces).
 //
 // Build + install:  ./make-app.sh   (assembles TownCrier.app —
 // a real bundle is REQUIRED for UNUserNotificationCenter)
 //
-// Config: token read from ~/.config/crier/token (one line).
+// Config: ~/.config/crier/config, KEY=VALUE lines —
+//   CRIER_TOKEN=…   hub auth (required)
+//   NTFY_TOPIC=…    reserved ntfy topic (enables WebSocket)
+//   NTFY_AUTH=tk_…  ntfy access token (reserved topics need it)
+// Legacy ~/.config/crier/token (CRIER_TOKEN only) still works.
 // ============================================================
 
 import AppKit
+import ServiceManagement
 import UserNotifications
 
 let HUB = "https://ogrady.ai/api/crier/notify"
 let POLL_SECONDS: TimeInterval = 30
+let LIVE_POLL_EVERY_TICKS = 10        // fallback poll cadence while WS is live (~5 min)
+let WS_SILENCE_LIMIT: TimeInterval = 120 // ntfy keepalives arrive ~45 s; longer = dead socket
 
-func loadToken() -> String? {
-    let path = ("~/.config/crier/token" as NSString).expandingTildeInPath
-    return (try? String(contentsOfFile: path, encoding: .utf8))?
-        .trimmingCharacters(in: .whitespacesAndNewlines)
+struct Config {
+    var crierToken: String?
+    var ntfyTopic: String?
+    var ntfyAuth: String?
+
+    static func load() -> Config {
+        var c = Config()
+        let dir = ("~/.config/crier" as NSString).expandingTildeInPath
+        if let text = try? String(contentsOfFile: dir + "/config", encoding: .utf8) {
+            for line in text.split(separator: "\n") {
+                guard !line.hasPrefix("#") else { continue }
+                let parts = line.split(separator: "=", maxSplits: 1).map(String.init)
+                guard parts.count == 2 else { continue }
+                let key = parts[0].trimmingCharacters(in: .whitespaces)
+                let val = parts[1].trimmingCharacters(in: .whitespaces)
+                switch key {
+                case "CRIER_TOKEN": c.crierToken = val
+                case "NTFY_TOPIC":  c.ntfyTopic = val
+                case "NTFY_AUTH":   c.ntfyAuth = val
+                default: break
+                }
+            }
+        }
+        if c.crierToken == nil, // legacy single-token file
+           let t = try? String(contentsOfFile: dir + "/token", encoding: .utf8) {
+            c.crierToken = t.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        return c
+    }
 }
 
 struct Note: Codable {
@@ -42,7 +80,13 @@ final class Crier: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
     var timer: Timer?
     var lastSeenTs: Double = Date().timeIntervalSince1970 * 1000 // only notify for NEW notes
     var recent: [Note] = []
-    var token: String? = loadToken()
+    var config = Config.load()
+
+    var ws: URLSessionWebSocketTask?
+    var wsLive = false
+    var wsBackoff: TimeInterval = 2
+    var lastWsEvent = Date()
+    var tick = 0
 
     func applicationDidFinishLaunching(_ n: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -54,9 +98,10 @@ final class Crier: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         center.requestAuthorization(options: [.alert, .sound, .badge]) { _, _ in }
 
         timer = Timer.scheduledTimer(withTimeInterval: POLL_SECONDS, repeats: true) { _ in
-            Task { @MainActor in await self.poll() }
+            Task { @MainActor in await self.tickPoll() }
         }
         Task { await poll() }
+        connectWS()
     }
 
     // Show banners even while "active" (menu bar apps are always active)
@@ -75,8 +120,76 @@ final class Crier: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         done()
     }
 
+    // ---- ntfy WebSocket: realtime "check the hub now" signal ----
+
+    func connectWS() {
+        guard ws == nil else { return }
+        guard let topic = config.ntfyTopic, !topic.isEmpty,
+              let url = URL(string: "wss://ntfy.sh/\(topic)/ws") else { return }
+        var req = URLRequest(url: url)
+        if let auth = config.ntfyAuth, !auth.isEmpty {
+            req.setValue("Bearer \(auth)", forHTTPHeaderField: "Authorization")
+        }
+        let task = URLSession.shared.webSocketTask(with: req)
+        ws = task
+        task.resume()
+        receiveLoop(task)
+    }
+
+    func receiveLoop(_ task: URLSessionWebSocketTask) {
+        task.receive { [weak self] result in
+            Task { @MainActor in
+                guard let self, task === self.ws else { return }
+                switch result {
+                case .success(let msg):
+                    self.lastWsEvent = Date()
+                    if !self.wsLive { // (re)connected — catch up on anything missed
+                        self.wsLive = true
+                        self.wsBackoff = 2
+                        self.rebuildMenu()
+                        await self.poll()
+                    }
+                    if case .string(let s) = msg,
+                       let data = s.data(using: .utf8),
+                       let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                       obj["event"] as? String == "message" {
+                        await self.poll()
+                    }
+                    self.receiveLoop(task)
+                case .failure:
+                    self.wsDown()
+                }
+            }
+        }
+    }
+
+    func wsDown() {
+        ws?.cancel()
+        ws = nil
+        wsLive = false
+        rebuildMenu()
+        let delay = wsBackoff
+        wsBackoff = min(wsBackoff * 2, 60)
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+            self.connectWS()
+        }
+    }
+
+    // ---- hub polling (fallback + WS-triggered fetch) ----
+
+    func tickPoll() async {
+        tick += 1
+        if wsLive, Date().timeIntervalSince(lastWsEvent) > WS_SILENCE_LIMIT {
+            wsDown() // socket went quiet — ntfy keepalives should be steady
+        }
+        if !wsLive || tick % LIVE_POLL_EVERY_TICKS == 0 { await poll() }
+    }
+
     func poll() async {
-        guard let token else { setError("no token — echo TOKEN > ~/.config/crier/token"); return }
+        guard let token = config.crierToken else {
+            setError("no token — add CRIER_TOKEN to ~/.config/crier/config"); return
+        }
         guard var comps = URLComponents(string: HUB) else { return }
         comps.queryItems = [.init(name: "limit", value: "20")]
         var req = URLRequest(url: comps.url!)
@@ -116,6 +229,14 @@ final class Crier: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
 
     func rebuildMenu() {
         let menu = NSMenu()
+
+        let mode = wsLive ? "⚡︎ Live — ntfy WebSocket"
+                 : (config.ntfyTopic?.isEmpty ?? true)
+                 ? "Polling every 30 s (no NTFY_TOPIC in config)"
+                 : "Polling every 30 s — WebSocket reconnecting…"
+        menu.addItem(withTitle: mode, action: nil, keyEquivalent: "")
+        menu.addItem(.separator())
+
         if recent.isEmpty {
             menu.addItem(withTitle: "No notes yet", action: nil, keyEquivalent: "")
         }
@@ -131,8 +252,25 @@ final class Crier: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         menu.addItem(withTitle: "Open Crier hub", action: #selector(openHub), keyEquivalent: "o").target = self
         menu.addItem(withTitle: "Check now", action: #selector(checkNow), keyEquivalent: "r").target = self
         menu.addItem(.separator())
+        let login = NSMenuItem(title: "Start at Login", action: #selector(toggleLoginItem), keyEquivalent: "")
+        login.target = self
+        login.state = SMAppService.mainApp.status == .enabled ? .on : .off
+        menu.addItem(login)
         menu.addItem(withTitle: "Quit Town Crier", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         statusItem.menu = menu
+    }
+
+    @objc func toggleLoginItem() {
+        do {
+            if SMAppService.mainApp.status == .enabled {
+                try SMAppService.mainApp.unregister()
+            } else {
+                try SMAppService.mainApp.register()
+            }
+        } catch {
+            setError("login item: \(error.localizedDescription)")
+        }
+        rebuildMenu()
     }
 
     @objc func openNote(_ sender: NSMenuItem) {

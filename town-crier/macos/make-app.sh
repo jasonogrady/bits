@@ -21,7 +21,7 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
   <key>CFBundleName</key><string>Town Crier</string>
   <key>CFBundleExecutable</key><string>TownCrier</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>0.1</string>
+  <key>CFBundleShortVersionString</key><string>0.2</string>
   <key>LSMinimumSystemVersion</key><string>15.0</string>
   <key>LSUIElement</key><true/>
   <key>NSHighResolutionCapable</key><true/>
@@ -35,5 +35,11 @@ if [[ "${1:-}" == "install" ]]; then
   rm -rf /Applications/TownCrier.app
   cp -R "$APP" /Applications/
   open /Applications/TownCrier.app
-  echo "Installed + launched. Token: mkdir -p ~/.config/crier && echo YOUR_CRIER_TOKEN > ~/.config/crier/token"
+  cat <<'HINT'
+Installed + launched. Config (~/.config/crier/config, KEY=VALUE):
+  CRIER_TOKEN=…    hub auth (legacy ~/.config/crier/token also works)
+  NTFY_TOPIC=…     reserved ntfy topic — enables the live WebSocket
+  NTFY_AUTH=tk_…   ntfy access token (reserved topics require it)
+Menu bar 📯 → "Start at Login" to auto-launch.
+HINT
 fi
