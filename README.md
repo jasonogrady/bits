@@ -15,6 +15,8 @@ need) — there's no build step, no package to install, no framework lock-in.
 | [`lobby`](./lobby) | 🛎️ The front door before the showroom — a first-visit landing card centered over the app itself, blurred behind frosted glass: brand mark, tiny build line, short pitch, and three doors (see the demo · sign in · contact). Pairs with `showroom`; auto-dismisses forever once any door is used. |
 | [`shop-bell`](./shop-bell) | 🔔 Visitor pulse with a bell on the door — first-party analytics that rings your phone when someone who matters walks in. Drop-in client (configurable browse + goal ⇒ qualified-lead funnel, scroll/dwell, owner opt-out) + Worker/D1 ledger with alert fan-out to a town-crier 📯 hub **and** ntfy direct. Named `pulse` on the wire because "analytics"/"track" get ad-blocked. |
 
+| [`guestbook`](./guestbook) | 📝 "Get notified" signups for a pre-launch site — form (first, last, email, note/referral), thanks page, and a PIN-gated `/admin` dashboard: metric tiles, newest-first table, CSV + Google Sheets export, per-channel notification settings with a send-test button. Fans out to town-crier 📯, ntfy, and email; SMS stubbed. Worker module + D1, zero deps. |
+
 ## Conventions
 
 Every module keeps to the same rules:
