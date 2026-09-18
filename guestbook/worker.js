@@ -17,6 +17,7 @@
      POST /admin/login           PIN check (5 fails → 15 min lockout per IP)
      GET  /admin/logout
      GET  /admin/api             metrics + signups + settings (JSON)
+     GET  /admin/count           {total} — for an "Admin (42)" button on the landing page
      POST /admin/settings        notification toggles
      POST /admin/test            fire a test note through every channel
      GET  /admin/signups.csv     CSV (cookie, or ?key=<export key> for Sheets)
@@ -29,6 +30,13 @@
      RESEND_API_KEY email via Resend (optional); NOTIFY_FROM sender address;
                     NOTIFY_TO default recipient (overridable in dashboard)
      SMS is a stub — channel exists in settings, reports "not wired".
+     ADMIN_SESSION_DAYS  how long a PIN login lasts (default 30)
+     GB_MINIMAL=1   privacy-minimal: store email + time only (no referrer/geo/UA),
+                    and notifications carry the running count, never the person
+
+   Own form? Skip /signup and call recordSignup() from your handler:
+     import { recordSignup } from "./guestbook/worker.js";
+     await recordSignup(request, env, ctx, { email });   // first/last/note/phone optional
 
    Landing-page hook: login also sets a non-HttpOnly `gb_admin=1` cookie,
    a UI hint only, so a static page can show an ADMIN link:
@@ -36,7 +44,7 @@
    ============================================================ */
 
 const CHANNELS = ["crier", "ntfy", "email", "sms"];
-const SESSION_DAYS = 30;
+const sessionDays = (env) => Number(env.ADMIN_SESSION_DAYS) || 30;
 
 export async function handleGuestbook(request, env, ctx) {
   const url = new URL(request.url);
@@ -60,6 +68,7 @@ export async function handleGuestbook(request, env, ctx) {
   if (!authed) return p === "/admin" ? html(pinPage(url.searchParams.get("err"))) : json({ error: "unauthorized" }, 401);
   if (p === "/admin") return html(dashboardPage());
   if (p === "/admin/api") return json(await snapshot(env));
+  if (p === "/admin/count") return json({ total: (await env.DB.prepare("SELECT COUNT(*) n FROM gb_signups").first()).n });
   if (p === "/admin/settings" && m === "POST") return saveSettings(request, env);
   if (p === "/admin/test" && m === "POST") {
     const results = await notify(env, {
@@ -86,7 +95,16 @@ async function signupPost(request, env, ctx) {
   const phone = optin ? e164(s("phone", 30)) : null;
   if (optin && !phone) return redirect("/signup?err=phone");
 
-  const cf = request.cf || {};
+  await recordSignup(request, env, ctx, { first, last, email, note, phone, optin });
+  return redirect("/thanks");
+}
+
+// Store one signup and ring the bell. Exported so a site with its own form (say, email-only + fetch)
+// can keep its handler and still land in the same table, dashboard, and fan-out.
+export async function recordSignup(request, env, ctx, { first = "", last = "", email, note = "", phone = null, optin = false }) {
+  const minimal = env.GB_MINIMAL === "1";
+  const cf = minimal ? {} : request.cf || {};
+  const hdr = (k) => (minimal ? null : (request.headers.get(k) || "").slice(0, 300) || null);
   await env.DB.prepare(
     `INSERT INTO gb_signups (ts, first, last, email, note, phone, sms_optin, sms_optin_ts, sms_optin_ip, referrer, city, country, ua)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -95,22 +113,21 @@ async function signupPost(request, env, ctx) {
   ).bind(
     Date.now(), first, last, email, note || null,
     phone, optin ? 1 : 0, optin ? Date.now() : null, optin ? request.headers.get("cf-connecting-ip") : null,
-    (request.headers.get("referer") || "").slice(0, 300) || null,
-    cf.city || null, cf.country || null,
-    (request.headers.get("user-agent") || "").slice(0, 300)
+    hdr("referer"), cf.city || null, cf.country || null, hdr("user-agent")
   ).run();
 
   const host = new URL(request.url).hostname;
   const where = [cf.city, cf.country].filter(Boolean).join(", ");
+  const total = (await env.DB.prepare("SELECT COUNT(*) n FROM gb_signups").first()).n;
+  const who = [first, last].filter(Boolean).join(" ");
   ctx.waitUntil(notify(env, {
     source: host,
-    title: `📝 New signup — ${host}`,
-    body: [`${first} ${last} <${email}>`, phone && `SMS opt-in: ${phone}`, note && `Note: ${note}`, where && `From: ${where}`].filter(Boolean).join("\n"),
+    title: `📝 New signup — ${host} (${total})`,
+    body: minimal ? `${total} on the list.` : [who ? `${who} <${email}>` : email, phone && `SMS opt-in: ${phone}`, note && `Note: ${note}`, where && `From: ${where}`].filter(Boolean).join("\n"),
     url: `https://${host}/admin`,
     priority: "default",
     tags: "memo",
   }));
-  return redirect("/thanks");
 }
 
 // US/CA numbers only for now; returns null if it doesn't look like one.
@@ -152,7 +169,7 @@ async function login(request, env) {
     return redirect(n >= 5 ? "/admin?err=locked" : "/admin?err=1");
   }
   await env.DB.prepare("DELETE FROM gb_attempts WHERE ip=?").bind(ip).run();
-  const maxAge = SESSION_DAYS * 86400;
+  const maxAge = sessionDays(env) * 86400;
   return new Response(null, {
     status: 303,
     headers: [
@@ -402,6 +419,7 @@ function load(){fetch("/admin/api").then(function(r){if(r.status===401)location.
 function render(d){state=d;var m=d.metrics;$("m-total").textContent=m.total;$("m-today").textContent=m.today;$("m-week").textContent=m.week;$("m-month").textContent=m.month;$("m-sms").textContent=m.sms;
   var tb=$("rows");tb.textContent="";d.signups.forEach(function(r){var tr=document.createElement("tr");
     [new Date(r.ts).toLocaleString(),r.first,r.last,r.email,r.note||"",r.sms_optin?r.phone+" ✓":"",[r.city,r.country].filter(Boolean).join(", ")].forEach(function(v,i){var td=document.createElement("td");td.textContent=v;if(i===4)td.className="note";tr.appendChild(td)});tb.appendChild(tr)});
+  [1,2,4,5,6].forEach(function(i){var empty=d.signups.length&&[].every.call(tb.rows,function(r){return !r.cells[i].textContent});[].forEach.call(document.querySelectorAll("tr"),function(r){if(r.cells[i])r.cells[i].hidden=empty})});
   if(!d.signups.length){var tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=7;td.textContent="No signups yet.";tr.appendChild(td);tb.appendChild(tr)}
   var ch=$("channels");ch.textContent="";Object.keys(LABELS).forEach(function(c){var l=document.createElement("label"),i=document.createElement("input");i.type="checkbox";i.id="n-"+c;i.checked=d.settings["notify_"+c]==="1";i.disabled=c==="sms";
     var pill=document.createElement("span");pill.className="pill"+(d.channels[c]?" ok":"");pill.textContent=d.channels[c]?"configured":"no secrets";l.appendChild(i);l.appendChild(document.createTextNode(LABELS[c]+" "));l.appendChild(pill);ch.appendChild(l)});

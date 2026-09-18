@@ -61,6 +61,11 @@ cookie; real auth is the HttpOnly `gb_s` cookie):
 <script>if(/\bgb_admin=1\b/.test(document.cookie))document.getElementById("admin").hidden=false;</script>
 ```
 
+**Own form?** Skip `/signup` and call `recordSignup(request, env, ctx, { email })` from your
+handler (first/last/note/phone optional); the dashboard hides columns nobody filled.
+Vars: `ADMIN_SESSION_DAYS` (PIN login lifetime, default 30) and `GB_MINIMAL=1`
+(store email + time only, no referrer/geo/UA; notifications carry the running count, never the person).
+
 ## Routes
 
 | Route | Auth | Does |
@@ -70,6 +75,7 @@ cookie; real auth is the HttpOnly `gb_s` cookie):
 | `GET /admin` | PIN cookie | dashboard; PIN page when signed out |
 | `POST /admin/login` | — | 5 wrong PINs from one IP → 15 min lockout |
 | `GET /admin/api` | admin | `{metrics, signups, settings, channels, export_key}` |
+| `GET /admin/count` | admin | `{total}` for an **Admin (42)** button on the landing page |
 | `POST /admin/settings` | admin | `{notify_crier, notify_ntfy, notify_email, notify_sms, notify_to}` |
 | `POST /admin/test` | admin | fire a test note; per-channel results returned and shown |
 | `GET /admin/signups.csv` | admin **or** `?key=<export_key>` | CSV, newest first |
