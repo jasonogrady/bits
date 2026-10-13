@@ -25,7 +25,7 @@ shapes are field-tested; the funnel is configurable.
 | File | What it is |
 |---|---|
 | `pulse.js` | Drop-in client — session, configurable funnel, scroll depth, dwell time, click classification, owner opt-out |
-| `worker.js` | `/api/pulse` handler for a Cloudflare Worker with D1 — storage, alert fan-out, health + selftest endpoint |
+| `worker.js` | `/api/pulse` handler for a Cloudflare Worker with D1 — storage, alert fan-out, health + selftest endpoint, traffic page, daily digest |
 | `schema.sql` | The `pulse_events` ledger table |
 
 ## The funnel
@@ -54,7 +54,7 @@ still qualifies. `qualified_lead` fires once per visitor.
         data-browse-links="instagram.com,github.com"></script>
 ```
 
-Events emitted: `page_view`, `session_start`, `goal_view`, `goal_click`,
+Events emitted: `page_view` (`{new: true}` on the first view of a session), `session_start`, `goal_view`, `goal_click`,
 `browse_click`, `outbound_click`, `qualified_lead`, `scroll` (25/50/75/90),
 `dwell` (15s/30s/60s/120s buckets, only while the tab is visible).
 Manual events: `window.pulse('demo_started', { plan: 'pro' })`.
@@ -84,9 +84,13 @@ Apply `schema.sql` to your D1 database, then bind secrets
 | `CRIER_URL` | Your [town-crier](../town-crier) hub's `/api/crier/notify` (optional) |
 | `NTFY_TOPIC` | Direct ntfy.sh channel (optional) |
 | `NTFY_AUTH` | ntfy access token — paid account, reserved topic (optional) |
+| `PULSE_NOTIFY` | Events that ring, comma-separated. Default `session_start,qualified_lead`. `page_view,qualified_lead` rings on **every page**: the first view of a session is a 👀 Visit (default priority), later views are 📄 (low priority, hub only). Don't list both `page_view` and `session_start` — a new visitor would ring twice. Unknown events get a generic ⚡ note, so `window.pulse('demo_started')` can ring too. |
+| `PULSE_TZ` | IANA zone for the traffic page and digest (default `UTC`) |
 
 Alert channels are independent: configure one, both, or neither (ledger
-still fills). Every delivery status is reported, never swallowed.
+still fills). Every delivery status is reported, never swallowed. Quiet notes
+(priority `low`/`min`) go to the hub only — the direct ntfy path is reserved
+for things that should actually make the phone buzz.
 
 Two channels on purpose: the hub gives you the feed, Web Push, and one
 place every app posts to; direct ntfy is the redundant path that still
@@ -106,6 +110,41 @@ ctx.waitUntil(notify(env, {
   tags: "envelope_with_arrow",
 }));
 ```
+
+## Watching the traffic
+
+```
+GET /api/pulse?view=1&key=<CRIER_TOKEN>
+```
+
+A server-rendered page, no client JS: **on the site now** (sessions active in
+the last 5 minutes), today / 7-day / 30-day visitors with views and leads, a
+by-day table, top pages, referrers (by host) and countries for the week, and
+the last 50 sessions (last seen, dwell, pages visited, city/org, referrer,
+browser). Bots and your own visits are excluded from the counts; your own
+sessions show greyed, leads highlighted. To put it behind your own admin
+login instead of the token, route to `trafficPage(env, { host })`.
+
+**Daily digest** — add a cron trigger and a `scheduled()` handler:
+
+```jsonc
+// wrangler.jsonc
+"triggers": { "crons": ["0 15 * * *"] }   // 8am Pacific
+```
+
+```js
+import { pulseDigest } from "./worker.js";
+export default {
+  async fetch(request, env, ctx) { /* … */ },
+  async scheduled(_event, env, ctx) {
+    ctx.waitUntil(pulseDigest(env, { host: "yoursite.com", url: "https://yoursite.com/admin/traffic" }));
+  },
+};
+```
+
+One note a day — visitors, views, leads, top pages, referrers and countries
+for the last 24 hours. A digest that says `0 visitors` is the signal that the
+beacon or the site is broken, so it always sends.
 
 ## Health & testing
 

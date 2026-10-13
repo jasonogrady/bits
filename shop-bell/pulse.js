@@ -120,7 +120,7 @@
   if (startsWithAny(location.pathname, BROWSE_PATHS)) funnel.browse = true;
   if (startsWithAny(location.pathname, GOAL_PATHS)) funnel.goal = true;
   saveFunnel();
-  emit("page_view");
+  emit("page_view", newSession ? { new: true } : {});
   if (newSession) emit("session_start");
   if (funnel.goal && startsWithAny(location.pathname, GOAL_PATHS)) {
     emit("goal_view");
